@@ -1,0 +1,315 @@
+main.py
+
+==============================
+
+
+
+from machine import Pin, PWM
+import time
+import dht
+import network
+from umqtt.simple import MQTTClient
+import ujson
+
+# IDs for data management
+kit_id = 1
+# These are all strings to make it easier for the user to sync it with the flask app,
+# and so they won't be confused for the database IDs
+sensor_temp_id = "temperature 1"
+sensor_hum_id = "humidity 1"
+sensor_us_id = "ultrasonic 1"
+act_servo_id = "servo 1"
+act_led_red_id = "red led 1"
+act_led_blue_id = "blue led 1"
+act_led_yellow_id = "yellow led 1"
+act_led_green_id = "green led 1"
+
+# servo
+servo_pin = Pin(15)
+servo = PWM(servo_pin, freq=50)
+servo.duty(0)
+
+# ultrasonic sensor
+trig = Pin(25, Pin.OUT)
+echo = Pin(26, Pin.IN)
+
+# dht
+sensor_dht = dht.DHT22(Pin(0))
+
+# leds - temperature
+led_temp_low = Pin(2, Pin.OUT)
+led_temp_high = Pin(4, Pin.OUT)
+
+# leds - humidity
+led_hum_low = Pin(17, Pin.OUT)
+led_hum_high = Pin(18, Pin.OUT)
+
+def control_servo(angle):
+    servo.duty(int(((angle)/180 *2 + 0.5) / 20 * 1023)) 
+    
+def measure_distance():
+    trig.value(0)
+    time.sleep_us(2)
+    trig.value(1)
+    time.sleep_us(10)
+    trig.value(0)
+    
+    timeout = 100000
+    start = time.ticks_us()
+    
+    while echo.value() == 0:
+        if time.ticks_diff(time.ticks_us(), start) > timeout:
+            return -1
+    
+    pulse_start = time.ticks_us()
+    
+    while echo.value() == 1:
+        if time.ticks_diff(time.ticks_us(), pulse_start) > timeout:
+            return -1
+    
+    pulse_end = time.ticks_us()
+    
+    pulse_duration = time.ticks_diff(pulse_end, pulse_start)
+    return (pulse_duration / 2) * 0.0343
+    
+# MQTT
+MQTT_BROKER = "broker.emqx.io"
+MQTT_PORT = 1883
+CLIENT_ID = "mqttx_93e8b5282347924925io45i54yi544"
+SSID = "Wokwi-GUEST"
+PASSWORD = ""
+
+publish_topic = "silo_data"
+
+def connect_wifi():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(SSID, PASSWORD)
+    
+    print("Connecting to Wi-Fi...")
+    for _ in range(10):
+        if wlan.isconnected():
+            print("Connected!", wlan.ifconfig())
+            return True
+        time.sleep(1)
+        
+    print("Connection error")
+    return False
+
+# connect to broker
+def connect_mqtt():
+    client = MQTTClient(CLIENT_ID, MQTT_BROKER, MQTT_PORT)
+    client.connect()
+    print(f"Connected to MQTT Broker {MQTT_BROKER}")
+    return client
+
+def message_callback(topic, msg):
+    print(f"Mensagem recebida no tópico {topic.decode()}: {msg}")
+    print(msg)
+    if "empty silo" in msg:
+        setpoint = 180
+        print("Emptying silo")
+        control_servo(0)
+        json_payload = create_payload(kit_id, act_servo_id, "servo", 0)
+        client.publish(publish_topic, json_payload)
+        time.sleep(2)
+    else:
+        control_servo(90)
+        json_payload = create_payload(kit_id, act_servo_id, "servo", 90)
+        client.publish(publish_topic, json_payload)
+
+# function to create a payload json
+def create_payload(kit_id, device_name, device_type, value):
+    payload = {
+        "kit_id": kit_id,
+        "device_name": device_name,
+        "type": device_type,
+        "value": value
+    }
+    return ujson.dumps(payload)
+
+def flip_led(led, led_name, led_type, on_off):
+    led.value(on_off)
+    json_payload = create_payload(kit_id, led_name, led_type, on_off)
+    client.publish(publish_topic, json_payload)
+
+
+connect_wifi()
+
+client = connect_mqtt()
+client.set_callback(message_callback)
+client.subscribe("Silo")
+
+while True:
+    
+    try:
+        sensor_dht.measure()
+        control_servo(90)
+        json_payload = create_payload(kit_id, act_servo_id, "servo", 90)
+        client.publish(publish_topic, json_payload)
+        
+        # temperature LED logic
+        json_payload = create_payload(kit_id, sensor_temp_id, "temperature", str(sensor_dht.temperature()))
+        client.publish(publish_topic, json_payload)
+        if sensor_dht.temperature() > 27:
+            print("temperature too high -", sensor_dht.temperature())
+            flip_led(led_temp_high, act_led_red_id, "red LED", 1)
+            flip_led(led_temp_low, act_led_blue_id, "blue LED", 0)
+
+        elif sensor_dht.temperature() < 10:
+            print("temperature too low -", sensor_dht.temperature())
+            flip_led(led_temp_high, act_led_red_id, "red LED", 0)
+            flip_led(led_temp_low, act_led_blue_id, "blue LED", 1)
+        else:
+            print("temperature normal -", sensor_dht.temperature())
+            flip_led(led_temp_high, act_led_red_id, "red LED", 0)
+            flip_led(led_temp_low, act_led_blue_id, "blue LED", 0)
+        
+        # humidity LED logic
+        json_payload = create_payload(kit_id, sensor_hum_id, "humidity", str(sensor_dht.humidity()))
+        client.publish(publish_topic, json_payload)
+        if sensor_dht.humidity() > 80:
+            print("humidity too high -", sensor_dht.humidity())
+            flip_led(led_hum_high, act_led_green_id, "green LED", 1)
+            flip_led(led_hum_low, act_led_yellow_id, "yellow LED", 0)
+        elif sensor_dht.humidity() < 40:
+            print("humidity too low -", sensor_dht.humidity())
+            flip_led(led_hum_high, act_led_green_id, "green LED", 0)
+            flip_led(led_hum_low, act_led_yellow_id, "yellow LED", 1)
+        else:
+            print("humidity normal -", sensor_dht.humidity())
+            flip_led(led_hum_high, act_led_green_id, "green LED", 0)
+            flip_led(led_hum_low, act_led_yellow_id, "yellow LED", 0)
+            
+        distance = measure_distance()
+        print("silo level:", distance)
+        json_payload = create_payload(kit_id, sensor_us_id, "ultrasonic", str(distance))
+        client.publish(publish_topic, json_payload)
+        if distance < 10:
+            print("Silo is full!")
+            control_servo(0)
+            json_payload = create_payload(kit_id, act_servo_id, "servo", 0)
+            client.publish(publish_topic, json_payload)
+        else:
+            control_servo(90)
+            json_payload = create_payload(kit_id, act_servo_id, "servo", 90)
+            client.publish(publish_topic, json_payload)
+        
+        client.check_msg()
+        time.sleep(5)
+        
+    except:
+        client = connect_mqtt()
+        client.set_callback(message_callback)
+
+
+
+===================================
+
+diagram.json
+
+=============
+
+{
+  "version": 1,
+  "author": "Anonymous maker",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-c-v4",
+      "id": "esp",
+      "top": 0,
+      "left": -91.16,
+      "attrs": { "env": "micropython-20231227-v1.22.0" }
+    },
+    { "type": "wokwi-led", "id": "led1", "top": 54, "left": 176.6, "attrs": { "color": "red" } },
+    { "type": "wokwi-led", "id": "led2", "top": 102, "left": 224.6, "attrs": { "color": "blue" } },
+    {
+      "type": "wokwi-led",
+      "id": "led3",
+      "top": -13.2,
+      "left": 167,
+      "attrs": { "color": "yellow" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led4",
+      "top": -70.8,
+      "left": 128.6,
+      "attrs": { "color": "limegreen" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 157.85,
+      "left": 123.4,
+      "rotate": 180,
+      "attrs": { "value": "1000" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 119.45,
+      "left": 94.6,
+      "rotate": 180,
+      "attrs": { "value": "1000" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r3",
+      "top": 52.25,
+      "left": 94.6,
+      "rotate": 180,
+      "attrs": { "value": "1000" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r4",
+      "top": 4.25,
+      "left": 37,
+      "rotate": 180,
+      "attrs": { "value": "1000" }
+    },
+    { "type": "wokwi-servo", "id": "servo1", "top": 190, "left": 76.8, "attrs": {} },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -95.7,
+      "left": -216.6,
+      "attrs": { "humidity": "57", "temperature": "0.3" }
+    },
+    {
+      "type": "wokwi-hc-sr04",
+      "id": "ultrasonic1",
+      "top": -132.9,
+      "left": -128.9,
+      "attrs": { "distance": "2" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "r4:2", "esp:18", "limegreen", [ "v0" ] ],
+    [ "r3:2", "esp:17", "gold", [ "h-18", "v86.4" ] ],
+    [ "r2:2", "esp:4", "magenta", [ "v0" ] ],
+    [ "r1:2", "esp:2", "blue", [ "v0" ] ],
+    [ "servo1:PWM", "esp:15", "green", [ "h-9.6", "v-86.2" ] ],
+    [ "servo1:V+", "esp:3V3", "red", [ "h-201.6", "v-220.7" ] ],
+    [ "servo1:GND", "esp:GND.1", "black", [ "h-182.4", "v-86.4" ] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "v0" ] ],
+    [ "dht1:GND", "esp:GND.1", "black", [ "v0" ] ],
+    [ "ultrasonic1:VCC", "esp:3V3", "red", [ "h-28.8", "v67.2" ] ],
+    [ "ultrasonic1:TRIG", "esp:25", "blue", [ "v9.6", "h-58", "v134.4" ] ],
+    [ "ultrasonic1:ECHO", "esp:26", "cyan", [ "v19.2", "h-58.4", "v134.4" ] ],
+    [ "dht1:SDA", "esp:0", "green", [ "v0" ] ],
+    [ "led4:A", "r4:1", "green", [ "v0" ] ],
+    [ "led4:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "led3:C", "esp:GND.2", "black", [ "v0" ] ],
+    [ "led3:A", "r3:1", "yellow", [ "v0" ] ],
+    [ "led1:C", "esp:GND.2", "black", [ "v0", "h-86", "v-67.2" ] ],
+    [ "r2:1", "led1:A", "magenta", [ "v0", "h48" ] ],
+    [ "led2:A", "r1:1", "blue", [ "v0" ] ],
+    [ "led2:C", "esp:GND.2", "black", [ "v0", "h-134", "v-115.2" ] ]
+  ],
+  "dependencies": {}
+}

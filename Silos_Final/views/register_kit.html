@@ -1,0 +1,59 @@
+{% extends "base_home.html" %}
+
+{% block title %}Dispositivos{% endblock %}
+
+{% block content %}
+
+{% if user_role == 1 %}
+    <a href="/home" class="voltar">Voltar para a página inicial</a>
+     
+    <h3>Registrar Kit</h3>
+    <form action="/register_kit" method="POST">
+        <label for="kit_name">Kit Name:</label>
+        <input type="text" name="kit_name" required><br><br>
+
+        <div id="devices">
+            <div class="device">
+                <h4>Device</h4>
+                <label>Name:</label>
+                <input type="text" name="device_name[]" required>
+                
+                <label>Type:</label>
+                <input type="text" name="device_type[]" required>
+                
+                <label>Sensor Type:</label>
+                <input type="text" name="sensor_type[]">
+            </div>
+        </div>
+
+        <button type="button" onclick="addDevice()">Adicionar outro dispositivo</button>
+        <br><br>
+
+        <input type="submit" value="Register Kit">
+    </form>
+
+    <script>
+    function addDevice() {
+        const deviceDiv = document.createElement('div');
+        deviceDiv.classList.add('device');
+        deviceDiv.innerHTML = `
+            <h4>Device</h4>
+            <label>Name:</label>
+            <input type="text" name="device_name[]" required>
+            
+            <label>Type:</label>
+            <input type="text" name="device_type[]" required>
+            
+            <label>Sensor Type:</label>
+            <input type="text" name="sensor_type[]">
+        `;
+        document.getElementById('devices').appendChild(deviceDiv);
+    }
+    </script>
+
+{% else %}
+    <p>Acesso negado.</p>
+    <a href="/home" class="voltar">Voltar para a página inicial</a>
+{% endif %} 
+
+{% endblock %}

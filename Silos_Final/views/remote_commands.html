@@ -1,0 +1,37 @@
+{% extends "base_home.html" %}
+
+{% block title %}Comandos remotos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if user_role == 1 or user_role == 3 %}
+        <form id="mqttForm" action="/send_message" method="POST" class="card p-4 bg-powderblue">
+            <div class="mb-3">
+                <label for="topic" class="form-label">Tópico:</label>
+                <input type="text" class="form-control" id="topic" name="topic" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="message" class="form-label">Comando:</label>
+                <input type="text" class="form-control" id="message" name="message" required>
+            </div>
+            
+            <div class="botao_alinhar text-center">
+                <button class="btn btn-success-green" type="submit">Enviar mensagem</button>
+            </div>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="/command_history" class="btn btn-lightgreen-outline me-2">Ver histórico de comandos</a>
+            <a href="/home" class="btn btn-lightgreen-outline"> Voltar</a>
+        </div>
+    {% else %}
+        <div class="alert alert-danger text-center">
+            Acesso negado.
+            <div class="mt-2">
+                <a href="/home" class="btn btn-lightgreen-outline"> Voltar</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

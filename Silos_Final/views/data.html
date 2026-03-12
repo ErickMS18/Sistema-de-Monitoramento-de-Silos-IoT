@@ -1,0 +1,120 @@
+{% extends "base_home.html" %}
+
+{% block title %}Dados{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    {% if user_role == 1 or user_role == 2 %}
+        <div class="d-flex gap-2 mb-4">
+            <a href="/home" class="btn btn-lightgreen-outline"> Voltar para a página inicial</a>
+            <a href="{{ url_for('kits.view_kit', kit_id=device.kit_id) }}" class="btn btn-softblue"> Voltar para kit</a>
+        </div>
+
+        <h2 class="titulo mb-4">Dados de <span class="nome">{{ device.name }}</span></h2>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-powderblue">
+                <h3 class="h5 mb-0">Filtrar dados</h3>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('data.view_data', device_id=device.id) }}" method="POST" class="row g-3">
+                    <div class="col-md-5">
+                        <label class="form-label">Início</label>
+                        <input type="datetime-local" class="form-control" name="start" required>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">Fim</label>
+                        <input type="datetime-local" class="form-control" name="end" required>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success-green">Selecionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if method == 'POST' %}
+            {% if data and data|length > 0 %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-powderblue">
+                        <h3 class="h5 mb-0">Gráfico de dados</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-center">
+                            <canvas id="dataChart" width="500" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm">
+                    <div class="card-header bg-powderblue">
+                        <h3 class="h5 mb-0">Tabela de dados</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Valor</th>
+                                        <th>Horário</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for d in data %}
+                                        <tr>
+                                            <td>{{ d.value }}</td>
+                                            <td>{{ d.timestamp }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                <script>
+                    const ctx = document.getElementById('dataChart').getContext('2d');
+                    const dataChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: {{ labels | tojson }},
+                            datasets: [{
+                                label: 'Valor ao longo do tempo',
+                                data: {{ values | tojson }},
+                                borderColor: 'rgba(75, 192, 192, 1)',
+                                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                                borderWidth: 2,
+                                fill: true,
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: false,
+                            scales: {
+                                x: {
+                                    title: {
+                                        display: true,
+                                        text: 'Horário'
+                                    }
+                                },
+                                y: {
+                                    title: {
+                                        display: true,
+                                        text: 'Valor'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                </script>
+            {% else %}
+                <div class="alert alert-info">Nenhum dado encontrado no período selecionado.</div>
+            {% endif %}
+        {% endif %}
+    {% else %}
+        <div class="alert alert-danger">Acesso negado.</div>
+        <a href="/home" class="btn btn-lightgreen-outline">Voltar para a página inicial</a>
+    {% endif %}
+</div>
+{% endblock %}

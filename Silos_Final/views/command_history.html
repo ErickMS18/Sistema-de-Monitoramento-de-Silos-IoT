@@ -1,0 +1,36 @@
+{% extends "base_home.html" %}
+
+{% block title %}Histórico de comandos remotos{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    {% if user_role == 1 or user_role == 3 %}
+        <h2 class="titulo text-center mb-4">Histórico de Comandos</h2>
+
+        {% if history and history|length > 0 %}
+            <div class="mb-4">
+                {% for command in history %}
+                    <div class="p-3 mb-3 border rounded bg-light" style="border-color: lightgreen !important;">
+                        <p><strong>Data:</strong> {{ command.timestamp }}</p>
+                        <p><strong>Tópico:</strong> {{ command.topic }}</p>
+                        <p><strong>Comando:</strong> <span class="nome">{{ command.message }}</span></p>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-center">Nenhum comando encontrado.</p>
+        {% endif %}
+
+        <div class="text-center">
+            <a href="/remote_commands" class="btn btn-lightgreen-outline me-2"> Voltar</a>
+            <a href="/home" class="btn btn-primary-blue">Página Inicial</a>
+        </div>
+
+    {% else %}
+        <div class="alert alert-warning text-center" style="background-color: rgba(255, 193, 7, 0.2); border-color: #ffc107;">
+            Acesso negado.
+            <a href="/home" class="btn btn-sm btn-primary-blue mt-2">Página Inicial</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

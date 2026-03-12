@@ -1,0 +1,132 @@
+{% extends "base_home.html" %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if user_role == 1 %}  
+        <a href="/home" class="btn btn-softblue mb-4">Voltar</a>
+        
+        <div class="row">
+            <!-- Lista de Usuários -->
+            <div class="col-md-5 mb-4">
+                <h2 class="titulo mb-3">Lista de usuários</h2>
+                
+                <div class="card p-3 h-100">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="view_users">
+                            <thead class="bg-powderblue">
+                                <tr>
+                                    <th>Usuário</th>
+                                    <th>Função</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.name }}</td>
+                                    {% if user.role == 1 %}
+                                    <td>Admin</td> 
+                                    {% elif user.role == 2 %}
+                                    <td>Estatístico</td> 
+                                    {% elif user.role == 3 %}
+                                    <td>Operador</td> 
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Painel de Ações -->
+            <div class="col-md-7">
+                <div class="row">
+                    <!-- Cadastrar Usuário -->
+                    <div class="col-md-12 mb-4">
+                        <div class="card h-100 p-3">
+                            <h3 class="nome mb-3">Cadastrar Usuário</h3>
+                            <form action="{{ url_for('user.add_user') }}" method="post">
+                                <div class="mb-3">
+                                    <label class="form-label nome">Usuário:</label>
+                                    <input type="text" name="name" class="form-control" placeholder="Usuário" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label nome">Senha:</label>
+                                    <input type="password" name="password" class="form-control" placeholder="Senha" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label nome">Função:</label>
+                                    <select name="role" class="form-select">
+                                        {% for id, name in roles.items() %}
+                                        <option value="{{ id }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-success-green w-100">Cadastrar</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Atualizar e Remover Usuário -->
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 p-3">
+                            <h3 class="nome mb-3">Atualizar Usuário</h3>
+                            <form action="{{ url_for('user.edit_user') }}" method="POST">
+                                <div class="mb-3">
+                                    <label class="form-label nome">Usuário:</label>
+                                    <select name="old_user" class="form-select">
+                                        {% for user in users %}
+                                            <option value="{{ user.id }}">{{ user.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label nome">Novo nome:</label>
+                                    <input type="text" name="new_username" class="form-control" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label nome">Nova senha:</label>
+                                    <input type="password" name="new_password" class="form-control">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label nome">Nova função:</label>
+                                    <select name="new_role" class="form-select">
+                                        {% for id, name in roles.items() %}
+                                        <option value="{{ id }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-powderblue w-100">Atualizar</button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100 p-3">
+                            <h3 class="nome mb-3">Remover Usuário</h3>
+                            <form action="{{ url_for('user.del_user') }}" method="post">
+                                <div class="mb-3">
+                                    <label class="form-label nome">Selecione:</label>
+                                    <select name="user" class="form-select">
+                                        {% for user in users %}
+                                            <option value="{{ user.id }}">{{ user.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-lightgreen-outline w-100">Remover</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-danger text-center">
+            Acesso negado.
+            <a href="/home" class="btn btn-softblue mt-2">Voltar</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

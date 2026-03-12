@@ -1,0 +1,35 @@
+{% extends "base_home.html" %}
+
+{% block title %}Dispositivos{% endblock %}
+
+{% block content %}
+    <div class="container py-4">
+        {% if user_role == 1 %}
+            <a href="/home" class="btn btn-lightgreen-outline mb-4"> Voltar para a página inicial</a>
+
+            <h2 class="titulo text-center mb-4">Edit Kit: <span class="nome">{{ kit.name }}</span></h2>
+            
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-powderblue">
+                            <h3 class="h5 mb-0">Kit Settings</h3>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST">
+                                <div class="mb-3">
+                                    <label class="form-label">Kit Name</label>
+                                    <input type="text" class="form-control" name="name" value="{{ kit.name }}" required>
+                                </div>
+                                <button type="submit" class="btn btn-success-green w-100">Update Kit</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="alert alert-danger">Acesso negado.</div>
+            <a href="/home" class="btn btn-lightgreen-outline">Voltar para a página inicial</a>
+        {% endif %}
+    </div>
+{% endblock %}

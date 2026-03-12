@@ -1,0 +1,94 @@
+{% extends "base_home.html" %}
+
+{% block title %}Kits{% endblock %}
+
+{% block content %}
+    
+    {% if user_role == 1 or user_role == 2 %}
+        <div class="container py-4">
+            <div class="d-flex gap-2 mb-4">
+                <a href="/home" class="btn btn-lightgreen-outline">Voltar para a página inicial</a>
+                <a href="{{ url_for('kits.view_kits') }}" class="btn btn-softblue">Voltar para lista de kits</a>
+            </div>
+
+            <h1 class="titulo mb-4">Kit: <span class="nome">{{ kit.name }}</span></h1>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-powderblue">
+                    <h2 class="h5 mb-0">Dispositivos</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for device in kit.devices %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">{{ device.name }}</div>
+                                    <div class="small">
+                                        <span class="badge bg-info text-dark me-1">{{ device.type }}</span>
+                                       
+                                        <span class="badge {% if device.is_active %}badge-success-green{% else %}bg-secondary{% endif %}"></span>
+                                            {% if device.is_active %}Ativo{% else %}Inativo{% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a href="{{ url_for('data.view_data', device_id=device.id) }}" class="btn btn-sm btn-primary-blue">
+                                        Ver dados
+                                    </a>
+                                    {% if user_role == 1 %}
+                                    <form method="POST" action="/devices/delete/{{ device.id }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                                    </form>
+                                    <a href="/devices/edit/{{ device.id }}" class="btn btn-sm btn-success-green">
+                                        Editar
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            {% if user_role == 1 %}
+            <div class="card shadow-sm">
+                <div class="card-header bg-powderblue">
+                    <h3 class="h5 mb-0">Adicionar novo dispositivo</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" name="name" placeholder="Nome do dispositivo" required>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" name="device_type">
+                                <option value="sensor">Sensor</option>
+                                <option value="actuator">Atuador</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" name="unit" placeholder="Unidade de medida">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-center">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_active" id="is_active">
+                                <label class="form-check-label" for="is_active">Ativo</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-success-green">Adicionar dispositivo</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    {% else %}
+        <div class="container py-4">
+            <div class="alert alert-danger">Acesso negado.</div>
+            <a href="/home" class="btn btn-lightgreen-outline">Voltar para a página inicial</a>
+        </div>
+    {% endif %}
+
+{% endblock %}

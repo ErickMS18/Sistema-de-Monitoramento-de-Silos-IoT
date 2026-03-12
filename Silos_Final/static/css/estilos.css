@@ -1,0 +1,99 @@
+body{
+    background-color: rgb(216, 253, 221);
+}
+.titulo {
+    color: rgb(87, 220, 238);
+}
+
+.nome {
+    color: rgb(79, 252, 79);
+    font-weight: 500;
+}
+
+/* Novas classes de botões */
+.btn-primary-blue {
+    background-color: powderblue;
+    border: none;
+    color: #333;
+}
+
+.btn-success-green {
+    background-color: lightgreen;
+    border: none;
+    color: #333;
+}
+
+.btn-powderblue {
+    background-color: powderblue;
+    border: none;
+    color: #333;
+    opacity: 0.8;
+}
+
+.btn-lightgreen {
+    background-color: lightgreen;
+    border: none;
+    color: #333;
+    opacity: 0.8;
+}
+
+.btn-softblue {
+    background-color: rgba(176, 224, 230, 0.3); /* powderblue com transparência */
+    border: 1px solid powderblue;
+    color: #333;
+}
+
+.btn-lightgreen-outline {
+    background-color: transparent;
+    border: 1px solid lightgreen;
+    color: #333;
+}
+
+/* Efeitos hover para todos os botões */
+.btn-primary-blue:hover,
+.btn-success-green:hover,
+.btn-powderblue:hover,
+.btn-lightgreen:hover {
+    opacity: 1;
+    color: #000;
+}
+
+.btn-softblue:hover {
+    background-color: rgba(176, 224, 230, 0.5);
+}
+
+.btn-lightgreen-outline:hover {
+    background-color: lightgreen;
+    color: #333;
+}
+
+/* Adicione essas classes ao seu arquivo existente */
+
+.bg-powderblue {
+    background-color: powderblue;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(176, 224, 230, 0.3); /* powderblue claro */
+}
+
+.card {
+    border: 1px solid rgba(144, 238, 144, 0.5); /* lightgreen com transparência */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
+}
+
+.form-control, .form-select {
+    border: 1px solid lightgreen;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: powderblue;
+    box-shadow: 0 0 0 0.25rem rgba(176, 224, 230, 0.25);
+}
+
+.badge-success-green {
+    background-color: lightgreen;
+    color: #333;
+}

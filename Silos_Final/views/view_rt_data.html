@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Overview dos kits</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos.css') }}">
+</head>
+<body class="bg-light">
+<div class="container py-4">
+    {% if user_role == 1 or user_role == 2 %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="titulo">Todos os kits <small class="text-muted"> - Útimas atualizações</small></h1>
+            <a href="/home" class="btn btn-lightgreen-outline">Voltar</a>
+        </div>
+
+        <div id="kits-container" class="row g-4"></div>
+
+        <script>
+            async function fetchKitsData() {
+                const response = await fetch('/kits_overview_data');
+                const kitsData = await response.json();
+                const container = document.getElementById('kits-container');
+                container.innerHTML = '';
+
+                kitsData.forEach(kit => {
+                    const kitDiv = document.createElement('div');
+                    kitDiv.className = 'col-md-6';
+                    kitDiv.innerHTML = `
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-powderblue">
+                                <h2 class="h5 mb-0">Kit: <strong>${kit.name}</strong> <small class="text-muted">(ID: ${kit.id})</small></h2>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">`;
+                    
+                    const ul = document.createElement('ul');
+                    ul.className = 'list-group list-group-flush';
+                    
+                    kit.devices.forEach(device => {
+                        const li = document.createElement('li');
+                        li.className = 'list-group-item';
+                        if (device.latest_data.value !== null) {
+                            li.innerHTML = `
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">${device.name}</span>
+                                    <span class="badge bg-info text-dark">${device.type}</span>
+                                </div>
+                                <div class="mt-2">
+                                    <span class="fw-bold">Valor:</span> 
+                                    <span class="fs-5">${device.latest_data.value} ${device.unit}</span>
+                                </div>`;
+                        } else {
+                            li.innerHTML = `
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">${device.name}</span>
+                                    <span class="badge bg-secondary">${device.type}</span>
+                                </div>
+                                <div class="mt-2 text-muted">Sem dados disponíveis</div>`;
+                        }
+                        ul.appendChild(li);
+                    });
+                    
+                    kitDiv.querySelector('.card-body').appendChild(ul);
+                    container.appendChild(kitDiv);
+                });
+            }
+
+            setInterval(fetchKitsData, 5000);
+            fetchKitsData();
+        </script>
+    {% else %}
+        <div class="alert alert-danger">Acesso negado.</div>
+        <a href="/home" class="btn btn-lightgreen-outline">Voltar para a página inicial</a>
+    {% endif %}    
+</div>
+</body>
+</html>

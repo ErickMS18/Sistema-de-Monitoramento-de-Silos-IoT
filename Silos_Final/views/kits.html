@@ -1,0 +1,72 @@
+{% extends "base_home.html" %}
+
+{% block title %}Kits{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if user_role == 1 or user_role == 2 %}
+
+        <a href="/home" class="btn btn-lightgreen-outline mb-3">Voltar</a>
+
+        <h2 class="titulo text-center mb-4">Kits</h2>
+
+        {% if user_role == 1 %}
+        <form method="POST" class="card p-3 bg-powderblue mb-4">
+            <div class="input-group">
+                <input type="text" 
+                       name="name" 
+                       class="form-control" 
+                       placeholder="Nome do Kit" 
+                       required
+                       aria-label="Nome do Kit">
+                <button type="submit" class="btn btn-success-green">
+                    Adicionar Kit
+                </button>
+            </div>
+        </form>
+        {% endif %}
+
+        <div class="card p-0">
+            <ul class="list-group list-group-flush">
+                {% for kit in kits %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+       
+                    <span class="fw-bold">{{ kit.name }}</span>
+                    
+                    <div class="btn-group">
+           
+                        <form action="{{ url_for('kits.view_kit', kit_id=kit.id) }}" method="GET" class="m-0">
+                            <button type="submit" class="btn btn-powderblue btn-sm">
+                                Visualizar
+                            </button>
+                        </form>
+                        
+                        {% if user_role == 1 %}
+                      
+                        <form action="/kits/edit/{{ kit.id }}" method="GET" class="m-0">
+                            <button type="submit" class="btn btn-softblue btn-sm mx-1">
+                                Editar
+                            </button>
+                        </form>
+                        
+                        <form method="POST" action="/kits/delete/{{ kit.id }}" class="m-0">
+                            <button type="submit" class="btn btn-lightgreen-outline btn-sm">
+                                Excluir
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    {% else %}
+
+        <div class="alert alert-danger text-center py-3">
+            <p class="mb-2">Acesso negado.</p>
+            <a href="/home" class="btn btn-lightgreen-outline btn-sm">Voltar</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
